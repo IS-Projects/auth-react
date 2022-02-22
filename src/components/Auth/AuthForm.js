@@ -10,28 +10,18 @@ const checkPassword = (password) => {
   return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/.test(password);
 };
 
-async function convertToJson(res) {
-  if (res.ok) {
-    return await res.json();
-  } else {
-    return res.json().then((data) => {
-      // show an error modal
-      throw data.error.message;
-    });
-  }
-}
-
 const AuthForm = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
 
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
 
-  const submitHandler = async (event) => {
+  const submitHandler = (event) => {
     event.preventDefault();
 
     const enteredEmail = emailInputRef.current.value;
@@ -46,28 +36,36 @@ const AuthForm = () => {
       return;
     }
 
+    setIsLoading(true);
     if (isLogin) {
     } else {
-      try {
-        const response = await fetch(
-          "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCyA3jsUjk0y6NxwqCK7sZrWYl_3alnsiA",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              email: enteredEmail,
-              password: enteredPassword,
-              returnSecureToken: true,
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        ).then(convertToJson);
-        return response;
-      } catch (err) {
-        console.log(err);
-        alert(err);
-      }
+      fetch(
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBZhsabDexE9BhcJbGxnZ4DiRlrCN9xe24",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: enteredEmail,
+            password: enteredPassword,
+            returnSecureToken: true,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      ).then((res) => {
+        setIsLoading(false);
+        if (res.ok) {
+          // ...
+        } else {
+          return res.json().then((data) => {
+            let errorMessage = "Authentication failed!";
+            // if (data && data.error && data.error.message) {
+            //   errorMessage = data.error.message;
+            // }
+            alert(errorMessage);
+          });
+        }
+      });
     }
   };
 
@@ -85,13 +83,14 @@ const AuthForm = () => {
             type="password"
             id="password"
             required
-            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}"
-            title="Must contain at least one number, one uppercase and one lowercase letter, and at least 6 or more characters"
             ref={passwordInputRef}
           />
         </div>
         <div className={classes.actions}>
-          <button>{isLogin ? "Login" : "Create Account"}</button>
+          {!isLoading && (
+            <button>{isLogin ? "Login" : "Create Account"}</button>
+          )}
+          {isLoading && <p>Sending request...</p>}
           <button
             type="button"
             className={classes.toggle}
