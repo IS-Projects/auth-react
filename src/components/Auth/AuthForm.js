@@ -10,6 +10,17 @@ const checkPassword = (password) => {
   return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/.test(password);
 };
 
+async function convertToJson(res) {
+  if (res.ok) {
+    return await res.json();
+  } else {
+    return res.json().then((data) => {
+      // show an error modal
+      throw data.error.message;
+    });
+  }
+}
+
 const AuthForm = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
@@ -20,7 +31,7 @@ const AuthForm = () => {
     setIsLogin((prevState) => !prevState);
   };
 
-  const submitHandler = (event) => {
+  const submitHandler = async (event) => {
     event.preventDefault();
 
     const enteredEmail = emailInputRef.current.value;
@@ -31,35 +42,32 @@ const AuthForm = () => {
     const passwordIsValid = checkPassword(enteredPassword);
 
     if (!emailIsValid || !passwordIsValid) {
-      alert("Wrong password or email. Please try again!");
+      alert("Wrong email or password. Please try again!");
       return;
     }
 
     if (isLogin) {
     } else {
-      fetch(
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCyA3jsUjk0y6NxwqCK7sZrWYl_3alnsiA",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: enteredEmail,
-            password: enteredPassword,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      ).then((res) => {
-        if (res.ok) {
-          // ...
-        } else {
-          return res.json().then((data) => {
-            // show an error modal
-            console.log(data);
-          });
-        }
-      });
+      try {
+        const response = await fetch(
+          "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCyA3jsUjk0y6NxwqCK7sZrWYl_3alnsiA",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              email: enteredEmail,
+              password: enteredPassword,
+              returnSecureToken: true,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        ).then(convertToJson);
+        return response;
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
     }
   };
 
