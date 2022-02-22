@@ -2,6 +2,14 @@ import { useState, useRef } from "react";
 
 import classes from "./AuthForm.module.css";
 
+const validateEmail = (email) => {
+  return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
+};
+
+const checkPassword = (password) => {
+  return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/.test(password);
+};
+
 const AuthForm = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
@@ -19,6 +27,13 @@ const AuthForm = () => {
     const enteredPassword = passwordInputRef.current.value;
 
     // optional: Add validation
+    const emailIsValid = validateEmail(enteredEmail);
+    const passwordIsValid = checkPassword(enteredPassword);
+
+    if (!emailIsValid || !passwordIsValid) {
+      alert("Wrong password or email. Please try again!");
+      return;
+    }
 
     if (isLogin) {
     } else {
@@ -62,6 +77,8 @@ const AuthForm = () => {
             type="password"
             id="password"
             required
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}"
+            title="Must contain at least one number, one uppercase and one lowercase letter, and at least 6 or more characters"
             ref={passwordInputRef}
           />
         </div>
